@@ -1,0 +1,19 @@
+﻿<h3>ActiveBoard</h3>
+
+@code {
+    [Parameter]
+    public string Board { get; set; }
+
+    private async Task DeleteBoard()
+    {
+        
+    }
+}
+
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">@Board</h5>
+        <a @href=board class="btn btn-primary text-white">Visit</a>
+        <button @onclick="async () => { await DeleteBoard(); }" class="btn btn-danger">Delete</button>
+    </div>
+</div>

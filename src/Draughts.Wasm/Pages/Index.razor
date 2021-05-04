@@ -1,3 +1,56 @@
 ﻿@page "/"
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+@using Microsoft.AspNetCore.SignalR.Client
+@implements IAsyncDisposable
 
-<Draughtsboard></Draughtsboard>
+@code {
+    List<string> _boards = new();
+    private HubConnection _hub;
+
+    private async Task FetchBoards()
+    {
+        _boards.Clear();
+        var available = await Http.GetFromJsonAsync<IEnumerable<string>>("api/boards");
+        _boards.AddRange(available ?? Array.Empty<string>());
+    }
+
+    private async Task DeleteBoard(string name)
+    {
+        
+    }
+    
+    protected override async Task OnInitializedAsync()
+    {
+        await FetchBoards();
+        
+        _hub = new HubConnectionBuilder()
+            .WithUrl(NavigationManager.ToAbsoluteUri("/api/hub"))
+            .Build();
+        
+        _hub.On<string>("BoardCreated", board =>
+        {
+            Console.WriteLine($"Board created: {board}");
+            _boards.Add(board);
+            StateHasChanged();
+        });
+        
+        await _hub.StartAsync();
+    }
+    
+    public bool IsConnected =>
+        _hub.State == HubConnectionState.Connected;
+
+    public async ValueTask DisposeAsync()
+    {
+        await _hub.DisposeAsync();
+    }
+
+}
+
+<CreateBoardForm></CreateBoardForm>
+
+@foreach (var board in _boards)
+{
+    <ActiveBoard Board=board></ActiveBoard>
+}
