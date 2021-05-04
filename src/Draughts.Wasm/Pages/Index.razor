@@ -1,6 +1,6 @@
 ﻿@page "/"
-@inject HttpClient Http
-@inject NavigationManager NavigationManager
+@inject HttpClient _http
+@inject NavigationManager _navigationManager
 @using Microsoft.AspNetCore.SignalR.Client
 @implements IAsyncDisposable
 
@@ -11,7 +11,7 @@
     private async Task FetchBoards()
     {
         _boards.Clear();
-        var available = await Http.GetFromJsonAsync<IEnumerable<string>>("api/boards");
+        var available = await _http.GetFromJsonAsync<IEnumerable<string>>("api/boards");
         _boards.AddRange(available ?? Array.Empty<string>());
     }
 
@@ -22,10 +22,8 @@
     
     protected override async Task OnInitializedAsync()
     {
-        await FetchBoards();
-        
         _hub = new HubConnectionBuilder()
-            .WithUrl(NavigationManager.ToAbsoluteUri("/api/hub"))
+            .WithUrl(_navigationManager.ToAbsoluteUri("/api/hub"))
             .Build();
         
         _hub.On<string>("BoardCreated", board =>
@@ -34,8 +32,9 @@
             _boards.Add(board);
             StateHasChanged();
         });
-        
+
         await _hub.StartAsync();
+        await FetchBoards();
     }
     
     public bool IsConnected =>
@@ -45,12 +44,22 @@
     {
         await _hub.DisposeAsync();
     }
-
 }
 
 <CreateBoardForm></CreateBoardForm>
 
-@foreach (var board in _boards)
+@if (!IsConnected)
 {
-    <ActiveBoard Board=board></ActiveBoard>
+    <h5>Loading...</h5>
+}
+else if (_boards.Any())
+{
+    @foreach (var board in _boards)
+    {
+        <ActiveBoard Board=board></ActiveBoard>
+    }
+}
+else
+{
+    <h5>Empty, create a new board!</h5>
 }
