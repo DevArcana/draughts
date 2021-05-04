@@ -1,0 +1,38 @@
+﻿@using Draughts.Core
+@using System.Collections.Generic
+@using Draughts.Core
+@using System.Net.Http
+@inject HttpClient Http
+
+@code {
+    List<Draught> _draughts = new List<Draught>(24);
+
+    protected override async Task OnInitializedAsync()
+    {
+        var draughts = await Http.GetFromJsonAsync<Draughtboard>("api/board");
+        _draughts = draughts?.Draughts;
+    }
+}
+
+@for (var i = 0; i < 8; i++)
+{
+    <div class="row">
+        @for (var j = 0; j < 8; j++)
+        {
+            var draught = _draughts.FirstOrDefault(x => x.X == j && x.Y == i);
+            <div class="cell">
+                @if (draught is not null)
+                {
+                    @if (draught.IsBlack)
+                    {
+                        <div class="draught black"></div>
+                    }
+                    else
+                    {
+                        <div class="draught"></div>
+                    }
+                }
+            </div>
+        }
+    </div>
+}
