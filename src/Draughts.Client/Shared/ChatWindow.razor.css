@@ -1,0 +1,12 @@
+﻿#chat {
+    width: 300px;
+    position: fixed;
+    right: 0;
+    bottom: 0;
+}
+
+.chat-content {
+    height: 300px;
+    padding: 0;
+    overflow: auto;
+}

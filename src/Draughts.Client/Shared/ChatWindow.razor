@@ -1,0 +1,116 @@
+﻿@using Microsoft.AspNetCore.SignalR.Client
+@inject NavigationManager _navigationManager;
+@inject IJSRuntime _js;
+@implements IAsyncDisposable
+
+<div id="chat" class="card">
+  <header class="card-header chat-header">
+    <div class="card-header-title">Live Chat</div>
+  </header>
+  
+  @if (Username is null)
+  {
+    <div class="card-content">
+      <form @onsubmit="SaveUsername">
+        <p class="control">
+          <input @bind="EditedUsername" class="input" type="text" placeholder="Username...">
+        </p>
+      </form>
+    </div>
+    
+    <footer class="card-footer">
+      <a @onclick="SaveUsername" href="#" class="card-footer-item">Save</a>
+    </footer>
+  }
+  else
+  {
+    <div class="card-content table-container chat-content">
+      <table class="table is-fullwidth is-hoverable">
+        <tbody id="chat-content">
+        @foreach (var (author, content) in _messages)
+        {
+          <tr>
+            <th>@author:</th>
+            <td>@content</td>
+          </tr>
+        }
+        </tbody>
+      </table>
+    </div>
+    
+    <footer class="card-footer">
+      <form @onsubmit="SendMessage">
+        <p class="card-footer-item control">
+          <input @bind="Message" class="input" type="text" placeholder="Message...">
+        </p>
+      </form>
+    </footer>
+  }
+</div>
+
+@code {
+
+  private record MessageEntry(string Author, string Content);
+  
+  private string Username { get; set; }
+  private List<MessageEntry> _messages = new();
+  private HubConnection _hub;
+
+  #region NotLoggedIn
+
+  private string EditedUsername { get; set; }
+
+  private void SaveUsername()
+  {
+    if (string.IsNullOrWhiteSpace(EditedUsername))
+    {
+      return;
+    }
+
+    Username = EditedUsername;
+  }
+
+  #endregion
+  
+  private string Message { get; set; }
+
+  private async Task SendMessage()
+  {
+    if (string.IsNullOrWhiteSpace(Message))
+    {
+      return;
+    }
+
+    await _hub.SendAsync("SendMessage", Username, Message);
+    Message = "";
+  }
+
+  private void ReceiveMessage(string sender, string content)
+  {
+    _messages.Add(new MessageEntry(sender, content));
+    StateHasChanged();
+    _js.InvokeVoidAsync("scrollToLastMessage");
+  }
+  
+  protected override async Task OnAfterRenderAsync(bool firstRender)
+  {
+    await _js.InvokeVoidAsync("initChatBox");
+  }
+
+  protected override async Task OnInitializedAsync()
+  {
+    _hub = new HubConnectionBuilder()
+      .WithUrl(_navigationManager.ToAbsoluteUri("/signalr/chat"))
+      .Build();
+    
+    _hub.On<string, string>("ReceiveMessage", ReceiveMessage);
+
+    await _hub.StartAsync();
+  }
+
+  public async ValueTask DisposeAsync()
+  {
+    await _hub.DisposeAsync();
+  }
+
+}
