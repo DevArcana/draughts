@@ -1,0 +1,102 @@
+﻿@using System.ComponentModel.DataAnnotations
+@using Draughts.Server.Models
+@inject NavigationManager _navigationManager;
+@inject HttpClient _http;
+
+<div class="level">
+    <div class="level-item">
+        <button @onclick="OpenModal" class="button is-outlined">
+            Create a new game
+        </button>
+    </div>
+</div>
+
+<div class="modal @(_open ? "is-active" : "")">
+    <div @onclick="CloseModal" class="modal-background"></div>
+    <div class="modal-content">
+        <div class="box">
+            <EditForm Model="_data" OnValidSubmit="OnSubmit">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+                
+                <div class="field">
+                  <label class="label">Name</label>
+                  <div class="control">
+                      <InputText class="input" type="text" placeholder="Enter the name of your game..." @bind-Value="_data.Name" />
+                  </div>
+                </div>
+                
+                <div class="field">
+                  <div class="control">
+                    <label class="checkbox">
+                        <InputCheckbox @bind-Value="_data.MakePublic" />
+                      Make the game public
+                    </label>
+                  </div>
+                </div>
+                
+                <div class="field is-grouped">
+                  <div class="control">
+                    <button class="button is-link">Submit</button>
+                  </div>
+                  <div class="control">
+                    <button @onclick="CloseModal" class="button is-link is-light">Cancel</button>
+                  </div>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+    <button @onclick="CloseModal" class="modal-close is-large" aria-label="close"></button>
+</div>
+
+@code {
+    private bool _open = false;
+
+    private void CloseModal()
+    {
+        _open = false;
+    }
+
+    private void OpenModal()
+    {
+        _open = true;
+    }
+    
+    private class FormData
+    {
+        [Required]
+        [MinLength(3, ErrorMessage = "The name must be at least 3 characters long!")]
+        [MaxLength(32, ErrorMessage = "The name must not be longer than 32 characters!")]
+        public string Name { get; set; }
+        
+        public bool MakePublic { get; set; }
+    }
+
+    private FormData _data = new FormData {Name = "New Game", MakePublic = true};
+    private string _error = null;
+
+    private Uri Uri(string uri) => _navigationManager.ToAbsoluteUri(uri);
+    
+    private async Task OnSubmit()
+    {
+        var result = await _http.PostAsJsonAsync(Uri("/api/games"), new CreateGameDto {Name = _data.Name, MakePublic = _data.MakePublic});
+
+        if (result.IsSuccessStatusCode)
+        {
+            var game = await result.Content.ReadFromJsonAsync<ListGameDto>();
+
+            if (game is null)
+            {
+                _error = "The game was created but something went wrong. Tell this to the programmer responsible: code-banana";
+            }
+            else
+            {
+                _navigationManager.NavigateTo($"/games/{game.Id}");
+            }
+        }
+        else
+        {
+            _error = "Error while creating a game. Refresh the page and try again.";
+        }
+    }
+}

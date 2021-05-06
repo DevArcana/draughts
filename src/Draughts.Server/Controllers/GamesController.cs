@@ -60,7 +60,7 @@ namespace Draughts.Server.Controllers
                 return NotFound();
             }
 
-            return Ok(game);
+            return Ok(new ListGameDto {Id = game.Id, Name = game.Name, IsPublic = game.IsPublic});
         }
     }
 }

@@ -23,6 +23,24 @@ else
         <h1 class="title">@_game.Name</h1>
         <h2 class="subtitle">@_game.Id</h2>
     </section>
+
+    <section class="section">
+        <div class="level">
+            <div class="level-item">
+                @for (var y = 0; y < 10; y++)
+                {
+                    <div class="board-row">
+                        @for (var x = 0; x < 10; x++)
+                        {
+                            <div class="board-cell">
+                                <div class="draught @((x + y) % 2 == 0 ? "white" : "")"></div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
 }
 
 @code {
