@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using System.Threading.Tasks;
 using Draughts.Server.Models;
 using Draughts.Server.Services;
@@ -21,7 +20,7 @@ namespace Draughts.Server.Controllers
         [HttpGet]
         public IActionResult ListGames()
         {
-            return Ok(_games.Games.Select(x => new ListGameDto {Id = x.Id, Name = x.Name, IsPublic = x.IsPublic}));
+            return Ok(_games.Games);
         }
 
         [HttpPost]
@@ -60,7 +59,7 @@ namespace Draughts.Server.Controllers
                 return NotFound();
             }
 
-            return Ok(new ListGameDto {Id = game.Id, Name = game.Name, IsPublic = game.IsPublic});
+            return Ok(game);
         }
     }
 }

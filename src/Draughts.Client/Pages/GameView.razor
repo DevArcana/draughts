@@ -21,22 +21,35 @@ else
 {
     <section class="section">
         <h1 class="title">@_game.Name</h1>
-        <h2 class="subtitle">@_game.Id</h2>
+        <h2 class="subtitle">@_game.Id @if(!_game.IsPublic) {<span>This is a private game! Do not lose the identifier!</span>}</h2>
     </section>
 
     <section class="section">
         <div class="level">
             <div class="level-item">
-                @for (var y = 0; y < 10; y++)
+                @if (_board is null)
                 {
-                    <div class="board-row">
-                        @for (var x = 0; x < 10; x++)
-                        {
-                            <div class="board-cell">
-                                <div class="draught @((x + y) % 2 == 0 ? "white" : "")"></div>
-                            </div>
-                        }
-                    </div>
+                    <h2 class="title is-2">Failed to fetch playing board! Refresh the page or recreate game.</h2>
+                }
+                else
+                {
+                    for (var x = 0; x < Draughtboard.Size; x++)
+                    {
+                        <div class="board-row">
+                            @for (var y = 0; y < Draughtboard.Size; y++)
+                            {
+                                var sx = x;
+                                var sy = y;
+                                var draught = _board.Draughts[sx + sy * Draughtboard.Size];
+                                <div @onclick="() => { if (_selected is not null && (_selected.X != sx || _selected.Y != sy)) { _selected = null; } }" class="board-cell">
+                                    @if (draught is not null)
+                                    {
+                                        <div @onclick="() => { _selected = new SelectedDraught(sx, sy, draught); }" class="draught @(draught.IsWhite ? "white" : "") @(_selected is not null && _selected.Draught == draught ? "selected" : "")"></div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
                 }
             </div>
         </div>
@@ -48,11 +61,17 @@ else
     public string Guid { get; set; }
     
     private Game _game;
+    private Draughtboard _board;
+
+    private record SelectedDraught(int X, int Y, Draught Draught);
+
+    private SelectedDraught _selected = null;
     
     private Uri Uri(string uri) => _navigationManager.ToAbsoluteUri(uri);
 
     protected override async Task OnInitializedAsync()
     {
         _game = await _http.GetFromJsonAsync<Game>(Uri($"/api/games/{Guid}"));
+        _board = await _http.GetFromJsonAsync<Draughtboard>(Uri($"/api/boards/{Guid}"));
     }
 }

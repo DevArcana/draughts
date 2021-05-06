@@ -3,6 +3,7 @@
 @inject HttpClient _http;
 @using Microsoft.AspNetCore.SignalR.Client
 @using Draughts.Server.Models
+@using Draughts.Shared.Models
 @implements IAsyncDisposable
 
 @if (_games.Any())
@@ -42,13 +43,13 @@ else
 
 @code {
     private HubConnection _hub;
-    private List<ListGameDto> _games = new();
+    private List<Game> _games = new();
 
     private Uri Uri(string uri) => _navigationManager.ToAbsoluteUri(uri);
 
     private void GameCreated(Guid guid, string name)
     {
-        _games.Add(new ListGameDto() {Id = guid, Name = name, IsPublic = true});
+        _games.Add(new Game(guid, name,true));
         StateHasChanged();
     }
 
@@ -72,7 +73,7 @@ else
     
     private async Task FetchGames()
     {
-        var games = await _http.GetFromJsonAsync<IEnumerable<ListGameDto>>(Uri("/api/games"));
+        var games = await _http.GetFromJsonAsync<IEnumerable<Game>>(Uri("/api/games"));
 
         if (games is null)
         {

@@ -1,5 +1,6 @@
 ﻿@using System.ComponentModel.DataAnnotations
 @using Draughts.Server.Models
+@using Draughts.Shared.Models
 @inject NavigationManager _navigationManager;
 @inject HttpClient _http;
 
@@ -40,7 +41,7 @@
                     <button class="button is-link">Submit</button>
                   </div>
                   <div class="control">
-                    <button @onclick="CloseModal" class="button is-link is-light">Cancel</button>
+                    <button @onclick="CloseModal" type="button" class="button is-link is-light">Cancel</button>
                   </div>
                 </div>
             </EditForm>
@@ -83,7 +84,7 @@
 
         if (result.IsSuccessStatusCode)
         {
-            var game = await result.Content.ReadFromJsonAsync<ListGameDto>();
+            var game = await result.Content.ReadFromJsonAsync<Game>();
 
             if (game is null)
             {

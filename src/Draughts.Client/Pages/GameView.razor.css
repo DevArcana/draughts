@@ -41,3 +41,7 @@
 .draught.white {
     background: #fafafa;
 }
+
+.draught.selected {
+    border: yellow 4px solid;
+}

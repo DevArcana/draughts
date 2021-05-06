@@ -11,6 +11,7 @@ namespace Draughts.Server.Services
     public class GamesService
     {
         private readonly List<Game> _games = new();
+        private readonly Dictionary<Guid, Draughtboard> _boards = new();
 
         private readonly IHubContext<GamesHub> _hub;
 
@@ -29,6 +30,7 @@ namespace Draughts.Server.Services
             var game = new Game(Guid.NewGuid(), name, makePublic);
 
             _games.Add(game);
+            _boards[game.Id] = new Draughtboard();
 
             if (makePublic)
             {
@@ -54,9 +56,15 @@ namespace Draughts.Server.Services
             if (game.IsPublic && deleted)
             {
                 await _hub.Clients.All.SendAsync("GameDeleted", game.Id);
+                _boards.Remove(game.Id);
             }
 
             return deleted;
+        }
+
+        public Draughtboard GetBoard(Guid id)
+        {
+            return _boards.TryGetValue(id, out var board) ? board : null;
         }
 
         public Game GetGame(Guid id)
