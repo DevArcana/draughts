@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Draughts.Server.Hubs;
+using Draughts.Server.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -30,6 +31,8 @@ namespace Draughts.Server
         {
             services.AddSignalR();
             services.AddControllers();
+
+            services.AddSingleton<GamesService>();
             
             services.AddSwaggerGen(c =>
             {
@@ -68,6 +71,7 @@ namespace Draughts.Server
             {
                 endpoints.MapControllers();
                 endpoints.MapHub<ChatHub>("/signalr/chat");
+                endpoints.MapHub<GamesHub>("/signalr/games");
                 endpoints.MapFallbackToFile("index.html");
             });
         }
