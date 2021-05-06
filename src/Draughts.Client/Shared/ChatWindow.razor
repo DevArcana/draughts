@@ -1,14 +1,14 @@
 ﻿@using Microsoft.AspNetCore.SignalR.Client
-@inject NavigationManager _navigationManager;
+@using Draughts.Client.Services
+@inject ChatService _chat;
 @inject IJSRuntime _js;
-@implements IAsyncDisposable
 
 <div id="chat" class="card">
   <header class="card-header chat-header">
     <div class="card-header-title">Live Chat</div>
   </header>
   
-  @if (Username is null)
+  @if (_chat.Username is null)
   {
     <div class="card-content">
       <form @onsubmit="SaveUsername">
@@ -27,7 +27,7 @@
     <div class="card-content table-container chat-content">
       <table class="table is-fullwidth is-hoverable">
         <tbody id="chat-content">
-        @foreach (var (author, content) in _messages)
+        @foreach (var (author, content) in _chat.Messages)
         {
           <tr>
             <th>@author:</th>
@@ -49,13 +49,6 @@
 </div>
 
 @code {
-
-  private record MessageEntry(string Author, string Content);
-  
-  private string Username { get; set; }
-  private List<MessageEntry> _messages = new();
-  private HubConnection _hub;
-
   #region NotLoggedIn
 
   private string EditedUsername { get; set; }
@@ -67,7 +60,7 @@
       return;
     }
 
-    Username = EditedUsername;
+    _chat.Username = EditedUsername;
   }
 
   #endregion
@@ -81,17 +74,10 @@
       return;
     }
 
-    await _hub.SendAsync("SendMessage", Username, Message);
+    await _chat.SendMessage(Message);
     Message = "";
   }
 
-  private void ReceiveMessage(string sender, string content)
-  {
-    _messages.Add(new MessageEntry(sender, content));
-    StateHasChanged();
-    _js.InvokeVoidAsync("scrollToLastMessage");
-  }
-  
   protected override async Task OnAfterRenderAsync(bool firstRender)
   {
     await _js.InvokeVoidAsync("initChatBox");
@@ -99,18 +85,6 @@
 
   protected override async Task OnInitializedAsync()
   {
-    _hub = new HubConnectionBuilder()
-      .WithUrl(_navigationManager.ToAbsoluteUri("/signalr/chat"))
-      .Build();
-    
-    _hub.On<string, string>("ReceiveMessage", ReceiveMessage);
-
-    await _hub.StartAsync();
+    await _chat.Initialize(StateHasChanged);
   }
-
-  public async ValueTask DisposeAsync()
-  {
-    await _hub.DisposeAsync();
-  }
-
 }
