@@ -1,0 +1,51 @@
+﻿@page "/games/{guid}"
+@using Draughts.Shared.Models
+@inject NavigationManager _navigationManager;
+@inject HttpClient _http;
+
+<section class="section">
+    <a href="/" class="button is-outlined">
+        <span class="icon">
+          <i class="fab fa-home"></i>
+        </span>
+        <span>Go Back</span>
+    </a>
+</section>
+
+@if (_game is null)
+{
+    <section class="section">
+        <h1 class="title">Fetching game data...</h1>
+        <h2 class="subtitle">@Guid</h2>
+    </section>
+}
+else
+{
+    <section class="section">
+        <h1 class="title">@_game.Name</h1>
+        <h2 class="subtitle">@_game.Id</h2>
+    </section>
+}
+
+<h3>@Guid</h3>
+
+@if (_game is not null)
+{
+    <h2>@_game.Name</h2>
+}
+
+<a href="/">Return</a>
+
+@code {
+    [Parameter]
+    public string Guid { get; set; }
+    
+    private Game _game;
+    
+    private Uri Uri(string uri) => _navigationManager.ToAbsoluteUri(uri);
+
+    protected override async Task OnInitializedAsync()
+    {
+        _game = await _http.GetFromJsonAsync<Game>(Uri($"/api/games/{Guid}"));
+    }
+}

@@ -1,9 +1,104 @@
-﻿<div class="level">
-    <div class="level-item has-text-centered">
-        <h4 class="title is-4">No open games found...</h4>
+﻿@inject NavigationManager _navigationManager;
+@inject IJSRuntime _js;
+@inject HttpClient _http;
+@using Microsoft.AspNetCore.SignalR.Client
+@using Draughts.Server.Models
+@implements IAsyncDisposable
+
+@if (_games.Any())
+{
+    <div class="container is-max-desktop">
+        @foreach (var game in _games)
+            {
+                <div class="box">
+                    <div class="is-flex is-justify-content-space-between">
+                        <div class="is-flex-grow-0">
+                            <h4 class="title is-4 mb-0">@game.Name</h4>
+                            <h7 class="subtitle is-7">@game.Id</h7>
+                        </div>
+                        <div class="buttons">
+                            <a href="/games/@game.Id" class="button is-info is-outlined">
+                                <span>Open</span>
+                                <span class="icon"><i class="fas fa-chess"></i></span>
+                            </a>
+                            <button @onclick="() => DeleteGame(game.Id)" class="button is-danger is-outlined">
+                              <span>Delete</span>
+                              <span class="icon"><i class="fas fa-trash"></i></span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
     </div>
-</div>
+}
+else
+{
+    <div class="level">
+        <div class="level-item has-text-centered">
+            <h4 class="title is-4">No open games found...</h4>
+        </div>
+    </div>
+}
 
 @code {
+    private HubConnection _hub;
+    private List<ListGameDto> _games = new();
+
+    private Uri Uri(string uri) => _navigationManager.ToAbsoluteUri(uri);
+
+    private void GameCreated(Guid guid, string name)
+    {
+        _games.Add(new ListGameDto() {Id = guid, Name = name, IsPublic = true});
+        StateHasChanged();
+    }
+
+    private void GameDeleted(Guid guid)
+    {
+        var game = _games.FirstOrDefault(x => x.Id == guid);
+        
+        if (game is null)
+        {
+            return;
+        }
+        
+        _games.Remove(game);
+        StateHasChanged();
+    }
+
+    private async Task DeleteGame(Guid guid)
+    {
+        await _http.DeleteAsync(Uri($"/api/games/{guid}"));
+    }
     
+    private async Task FetchGames()
+    {
+        var games = await _http.GetFromJsonAsync<IEnumerable<ListGameDto>>(Uri("/api/games"));
+
+        if (games is null)
+        {
+            return;
+        }
+
+        _games.Clear();
+        _games.AddRange(games);
+        StateHasChanged();
+    }
+    
+    protected override async Task OnInitializedAsync()
+    {
+        _hub = new HubConnectionBuilder()
+            .WithUrl(Uri("/signalr/games"))
+            .Build();
+    
+        _hub.On<Guid, string>("GameCreated", GameCreated);
+        _hub.On<Guid>("GameDeleted", GameDeleted);
+
+        await _hub.StartAsync();
+        await FetchGames();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await _hub.DisposeAsync();
+    }
 }
