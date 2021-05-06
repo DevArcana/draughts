@@ -3,14 +3,12 @@
 @inject NavigationManager _navigationManager;
 @inject HttpClient _http;
 
-<section class="section">
-    <a href="/" class="button is-outlined">
-        <span class="icon">
-          <i class="fab fa-home"></i>
-        </span>
-        <span>Go Back</span>
-    </a>
-</section>
+<a href="/" class="button is-outlined">
+    <span class="icon">
+      <i class="fab fa-home"></i>
+    </span>
+    <span>Go Back</span>
+</a>
 
 @if (_game is null)
 {
@@ -26,15 +24,6 @@ else
         <h2 class="subtitle">@_game.Id</h2>
     </section>
 }
-
-<h3>@Guid</h3>
-
-@if (_game is not null)
-{
-    <h2>@_game.Name</h2>
-}
-
-<a href="/">Return</a>
 
 @code {
     [Parameter]

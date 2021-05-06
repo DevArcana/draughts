@@ -17,7 +17,6 @@ namespace Draughts.Server.Services
         public GamesService(IHubContext<GamesHub> hub)
         {
             _hub = hub;
-            _games.Add(new Game(Guid.Parse("4c7c7629-cd7b-43bf-a45b-09b78182380e"), "Amazing Game", true));
         }
 
         public async Task<Game> CreateGame(string name, bool makePublic)
