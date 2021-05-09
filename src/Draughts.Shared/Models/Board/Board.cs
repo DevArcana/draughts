@@ -22,7 +22,7 @@ namespace Draughts.Shared.Models
             
             if (pos < 0 || pos >= Pieces.Length)
             {
-                throw new ArgumentOutOfRangeException();
+                return null;
             }
 
             return Pieces[pos];
