@@ -1,7 +1,9 @@
 ﻿@page "/games/{guid}"
 @using Draughts.Shared.Models
+@using Microsoft.AspNetCore.SignalR.Client
 @inject NavigationManager _navigationManager;
 @inject HttpClient _http;
+@implements IAsyncDisposable
 
 <a href="/" class="button is-outlined">
     <span class="icon">
@@ -33,18 +35,18 @@ else
                 }
                 else
                 {
-                    for (var x = 0; x < Draughtboard.Size; x++)
+                    for (var x = 0; x < Board.Size; x++)
                     {
                         <div class="board-row">
-                            @for (var y = 0; y < Draughtboard.Size; y++)
+                            @for (var y = 0; y < Board.Size; y++)
                             {
                                 var sx = x;
                                 var sy = y;
-                                var draught = _board.Draughts[sx + sy * Draughtboard.Size];
-                                <div @onclick="() => { if (_selected is not null && (_selected.X != sx || _selected.Y != sy)) { _selected = null; } }" class="board-cell">
-                                    @if (draught is not null)
+                                var piece = _board.Pieces[sx + sy * Board.Size];
+                                <div @onclick="() => { if (_selected is not null && (_selected.Pos.X != sx || _selected.Pos.Y != sy)) { _selected = null; } }" class="board-cell">
+                                    @if (piece is not null)
                                     {
-                                        <div @onclick="() => { _selected = new SelectedDraught(sx, sy, draught); }" class="draught @(draught.IsWhite ? "white" : "") @(_selected is not null && _selected.Draught == draught ? "selected" : "")"></div>
+                                        <div @onclick="() => { _selected = piece; }" class="draught @(piece.Side == Side.White ? "white" : "") @(_selected == piece ? "selected" : "")"></div>
                                     }
                                 </div>
                             }
@@ -61,17 +63,33 @@ else
     public string Guid { get; set; }
     
     private Game _game;
-    private Draughtboard _board;
+    private Board _board;
 
-    private record SelectedDraught(int X, int Y, Draught Draught);
-
-    private SelectedDraught _selected = null;
+    private BoardPiece _selected = null;
+    
+    private HubConnection _hub;
     
     private Uri Uri(string uri) => _navigationManager.ToAbsoluteUri(uri);
 
     protected override async Task OnInitializedAsync()
     {
         _game = await _http.GetFromJsonAsync<Game>(Uri($"/api/games/{Guid}"));
-        _board = await _http.GetFromJsonAsync<Draughtboard>(Uri($"/api/boards/{Guid}"));
+        _board = await _http.GetFromJsonAsync<Board>(Uri($"/api/boards/{Guid}"));
+        
+        _hub = new HubConnectionBuilder()
+            .WithUrl(Uri("/signalr/games"))
+            .Build();
+    
+        // _hub.On<Guid, string>("GameCreated", GameCreated);
+        // _hub.On<Guid>("GameDeleted", GameDeleted);
+
+        await _hub.StartAsync();
+        await _hub.SendAsync("WatchBoard", Guid);
     }
+
+    public async ValueTask DisposeAsync()
+    {
+        await _hub.DisposeAsync();
+    }
+
 }
