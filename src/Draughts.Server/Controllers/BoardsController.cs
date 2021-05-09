@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Draughts.Server.Hubs;
+using Draughts.Server.Models;
 using Draughts.Server.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
@@ -10,12 +12,10 @@ namespace Draughts.Server.Controllers
     [Route("api/[controller]")]
     public class BoardsController : ControllerBase
     {
-        private readonly IHubContext<BoardsHub> _hub;
         private readonly GamesService _games;
 
-        public BoardsController(IHubContext<BoardsHub> hub, GamesService games)
+        public BoardsController(GamesService games)
         {
-            _hub = hub;
             _games = games;
         }
 
@@ -30,6 +30,20 @@ namespace Draughts.Server.Controllers
             }
 
             return Ok(board);
+        }
+
+        [HttpPost("{guid:guid}/moves")]
+        public async Task<IActionResult> MakeMove(Guid guid, [FromBody] MakeMoveDto dto)
+        {
+            var (source, destination) = dto;
+            var move = await _games.MakeMove(guid, source, destination);
+
+            if (move is null)
+            {
+                return BadRequest("Invalid move!");
+            }
+            
+            return Ok(move);
         }
     }
 }

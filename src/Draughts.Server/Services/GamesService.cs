@@ -28,9 +28,11 @@ namespace Draughts.Server.Services
             }
             
             var game = new Game(Guid.NewGuid(), name, makePublic);
+            var board = new Board();
+            board.Initialize();
 
             _games.Add(game);
-            _boards[game.Id] = new Board();
+            _boards[game.Id] = board;
 
             if (makePublic)
             {
@@ -65,6 +67,25 @@ namespace Draughts.Server.Services
         public Board GetBoard(Guid id)
         {
             return _boards.TryGetValue(id, out var board) ? board : null;
+        }
+
+        public async Task<Move> MakeMove(Guid boardId, BoardSquare from, BoardSquare to)
+        {
+            var board = GetBoard(boardId);
+
+            if (board is null)
+            {
+                return null;
+            }
+
+            var move = board.MakeMove(from, to);
+
+            if (move is not null)
+            {
+                await _hub.Clients.Group(boardId.ToString()).SendAsync("PieceMoved", move);
+            }
+
+            return move;
         }
 
         public Game GetGame(Guid id)

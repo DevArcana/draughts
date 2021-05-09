@@ -1,6 +1,7 @@
 ﻿@page "/games/{guid}"
 @using Draughts.Shared.Models
 @using Microsoft.AspNetCore.SignalR.Client
+@using Draughts.Server.Models
 @inject NavigationManager _navigationManager;
 @inject HttpClient _http;
 @implements IAsyncDisposable
@@ -43,10 +44,17 @@ else
                                 var sx = x;
                                 var sy = y;
                                 var piece = _board.Pieces[sx + sy * Board.Size];
-                                <div @onclick="() => { if (_selected is not null && (_selected.Pos.X != sx || _selected.Pos.Y != sy)) { _selected = null; } }" class="board-cell">
+
+                                AvailableMove move = null;
+                                if (_availableMoves is not null && _availableMoves.Any())
+                                {
+                                    move = _availableMoves.FirstOrDefault(m => m.Pos.X == x && m.Pos.Y == y);
+                                }
+                                
+                                <div @onclick="async () => { if (move is null) {Select(piece);} else {await MoveTo(move);} }" class="board-cell @(move is not null ? "highlight-square" : "")">
                                     @if (piece is not null)
                                     {
-                                        <div @onclick="() => { _selected = piece; }" class="draught @(piece.Side == Side.White ? "white" : "") @(_selected == piece ? "selected" : "")"></div>
+                                        <div class="draught @(piece.Side == Side.White ? "white" : "") @(_selected == piece ? "selected" : "")"></div>
                                     }
                                 </div>
                             }
@@ -66,10 +74,39 @@ else
     private Board _board;
 
     private BoardPiece _selected = null;
+    private AvailableMove[] _availableMoves = null;
     
     private HubConnection _hub;
     
     private Uri Uri(string uri) => _navigationManager.ToAbsoluteUri(uri);
+
+    private async Task MoveTo(AvailableMove move)
+    {
+        var result = await _http.PostAsJsonAsync(Uri($"/api/boards/{Guid}/moves"), new MakeMoveDto(_selected.Pos, move.Pos));
+        Console.WriteLine(result);
+    }
+
+    private async Task PieceMoved(Move move)
+    {
+        Console.WriteLine("Piece moved!");
+        _board = await _http.GetFromJsonAsync<Board>(Uri($"/api/boards/{Guid}"));
+        _selected = null;
+        _availableMoves = null;
+        StateHasChanged();
+    }
+
+    private void Select(BoardPiece piece)
+    {
+        if (piece is not null && _selected != piece)
+        {
+            _selected = piece;
+            _availableMoves = _board.GetAvailableMovesFor(piece);
+            return;
+        }
+        
+        _selected = null;
+        _availableMoves = null;
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -80,8 +117,7 @@ else
             .WithUrl(Uri("/signalr/games"))
             .Build();
     
-        // _hub.On<Guid, string>("GameCreated", GameCreated);
-        // _hub.On<Guid>("GameDeleted", GameDeleted);
+        _hub.On<Move>("PieceMoved", PieceMoved);
 
         await _hub.StartAsync();
         await _hub.SendAsync("WatchBoard", Guid);

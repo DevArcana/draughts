@@ -72,7 +72,6 @@ namespace Draughts.Server
                 endpoints.MapControllers();
                 endpoints.MapHub<ChatHub>("/signalr/chat");
                 endpoints.MapHub<GamesHub>("/signalr/games");
-                endpoints.MapHub<BoardsHub>("/signalr/boards");
                 endpoints.MapFallbackToFile("index.html");
             });
         }
