@@ -33,6 +33,10 @@
     background: yellow !important;
 }
 
+.center-icon {
+    margin: auto;
+}
+
 .draught {
     width: 50px;
     height: 50px;
@@ -40,10 +44,15 @@
     border: black 1px solid;
     margin: auto;
     background: #2b2b2b;
+    color: #fafafa;
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
 }
 
 .draught.white {
     background: #fafafa;
+    color: #2b2b2b;
 }
 
 .draught.selected {

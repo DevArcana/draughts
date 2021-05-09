@@ -54,7 +54,12 @@ else
                                 <div @onclick="async () => { if (move is null) {Select(piece);} else {await MoveTo(move);} }" class="board-cell @(move is not null ? "highlight-square" : "")">
                                     @if (piece is not null)
                                     {
-                                        <div class="draught @(piece.Side == Side.White ? "white" : "") @(_selected == piece ? "selected" : "")"></div>
+                                        <div class="draught @(piece.Side == Side.White ? "white" : "") @(_selected == piece ? "selected" : "")">
+                                            @if (piece.Promoted)
+                                            {
+                                                <span class="icon center-icon"><i class="fas fa-crown"></i></span>
+                                            }
+                                        </div>
                                     }
                                 </div>
                             }
