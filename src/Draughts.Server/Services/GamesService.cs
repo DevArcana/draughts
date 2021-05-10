@@ -69,7 +69,7 @@ namespace Draughts.Server.Services
             return _boards.TryGetValue(id, out var board) ? board : null;
         }
 
-        public async Task<Move> MakeMove(Guid boardId, BoardSquare from, BoardSquare to)
+        public async Task<AvailableMove> MakeMove(Guid boardId, AvailableMove move)
         {
             var board = GetBoard(boardId);
 
@@ -78,7 +78,7 @@ namespace Draughts.Server.Services
                 return null;
             }
 
-            var move = board.MakeMove(from, to);
+            move = board.MakeMove(move);
 
             if (move is not null)
             {

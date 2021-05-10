@@ -1,4 +1,16 @@
-﻿namespace Draughts.Shared.Models
+﻿using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json.Serialization;
+
+namespace Draughts.Shared.Models
 {
-    public record AvailableMove(BoardSquare Pos, BoardPiece Takes);
+    public record AvailableMove(Move[] Moves)
+    {
+        [JsonIgnore]
+        public BoardSquare From => Moves[0].From;
+        [JsonIgnore]
+        public BoardSquare To => Moves.Last().To;
+        [JsonIgnore]
+        public IEnumerable<BoardPiece> Takes => Moves.Where(x => x.Taken is not null).Select(x => x.Taken);
+    };
 }

@@ -41,17 +41,12 @@ else
                         <div class="board-row">
                             @for (var y = 0; y < Board.Size; y++)
                             {
-                                var sx = x;
-                                var sy = y;
-                                var piece = _board.Pieces[sx + sy * Board.Size];
+                                var square = new BoardSquare(x, y);
+                                var piece = _board.Pieces[x + y * Board.Size];
 
-                                AvailableMove move = null;
-                                if (_availableMoves is not null && _availableMoves.Any())
-                                {
-                                    move = _availableMoves.FirstOrDefault(m => m.Pos.X == x && m.Pos.Y == y);
-                                }
-                                
-                                <div @onclick="async () => { if (move is null) {Select(piece);} else {await MoveTo(move);} }" class="board-cell @(move is not null ? "highlight-square" : "")">
+                                var highlight = _selected is not null && _board.AvailableMoves.Any(x => x.From == _selected.Pos && x.Moves.Any(m => m.To == square));
+
+                                <div @onclick="() => { Select(piece); }" class="board-cell @(highlight ? "highlight-square" : "")">
                                     @if (piece is not null)
                                     {
                                         <div class="draught @(piece.Side == Side.White ? "white" : "") @(_selected == piece ? "selected" : "")">
@@ -79,7 +74,6 @@ else
     private Board _board;
 
     private BoardPiece _selected = null;
-    private AvailableMove[] _availableMoves = null;
     
     private HubConnection _hub;
     
@@ -87,7 +81,7 @@ else
 
     private async Task MoveTo(AvailableMove move)
     {
-        var result = await _http.PostAsJsonAsync(Uri($"/api/boards/{Guid}/moves"), new MakeMoveDto(_selected.Pos, move.Pos));
+        var result = await _http.PostAsJsonAsync(Uri($"/api/boards/{Guid}/moves"), move);
         Console.WriteLine(result);
     }
 
@@ -96,7 +90,6 @@ else
         Console.WriteLine("Piece moved!");
         _board = await _http.GetFromJsonAsync<Board>(Uri($"/api/boards/{Guid}"));
         _selected = null;
-        _availableMoves = null;
         StateHasChanged();
     }
 
@@ -105,12 +98,10 @@ else
         if (piece is not null && _selected != piece)
         {
             _selected = piece;
-            _availableMoves = _board.GetAvailableMovesFor(piece);
             return;
         }
         
         _selected = null;
-        _availableMoves = null;
     }
 
     protected override async Task OnInitializedAsync()

@@ -1,4 +1,4 @@
 ﻿namespace Draughts.Shared.Models
 {
-    public record Move(BoardPiece Piece, AvailableMove Movement);
+    public record Move(BoardSquare From, BoardSquare To, BoardPiece Taken);
 }
