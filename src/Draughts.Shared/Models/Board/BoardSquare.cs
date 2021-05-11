@@ -17,6 +17,6 @@ namespace Draughts.Shared.Models.Board
         }
         
         public bool IsValid => X >= 0 && Y >= 0 && X < 10 && Y < 10;
-        public int Identifier => 1;
+        public int Identifier => (X + Y * 10) / 2;
     };
 }

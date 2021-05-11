@@ -136,22 +136,16 @@ namespace Draughts.Shared.Models.Board
             return availableMoves.ToArray();
         }
         
-        public AvailableMove MakeMove(AvailableMove move)
+        public AvailableMove MakeMove(string identifier)
         {
+            var move = AvailableMoves.FirstOrDefault(m => m.Identifier == identifier);
+
+            if (move is null)
+            {
+                return null;
+            }
+            
             var piece = GetPiece(move.From);
-
-            if (piece is null)
-            {
-                return null;
-            }
-
-            var availableMove = AvailableMoves.FirstOrDefault(m => m.To == move.To);
-
-            if (availableMove is null)
-            {
-                return null;
-            }
-
             var to = move.To;
             SetPiece(move.From, null);
             var promote = (piece.Side == Side.Black && to.Y == Size - 1) || (piece.Side == Side.White && to.Y == 0);

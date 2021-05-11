@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Draughts.Server.Services;
 using Draughts.Shared.Models;
 using Draughts.Shared.Models.Board;
+using Draughts.Shared.Models.Dto;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Draughts.Server.Controllers
@@ -32,9 +33,9 @@ namespace Draughts.Server.Controllers
         }
 
         [HttpPost("{guid:guid}/moves")]
-        public async Task<IActionResult> MakeMove(Guid guid, [FromBody] AvailableMove move)
+        public async Task<IActionResult> MakeMove(Guid guid, [FromBody] MakeMoveDto dto)
         {
-            move = await _games.MakeMove(guid, move);
+            var move = await _games.MakeMove(guid, dto.Identifier);
 
             if (move is null)
             {
