@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text.Json.Serialization;
 
 namespace Draughts.Shared.Models
 {
@@ -15,5 +16,8 @@ namespace Draughts.Shared.Models
                 _ => throw new ArgumentOutOfRangeException(nameof(dir), dir, null)
             };
         }
+
+        [JsonIgnore]
+        public bool IsValid => X >= 0 && Y >= 0 && X < 10 && Y < 10;
     };
 }

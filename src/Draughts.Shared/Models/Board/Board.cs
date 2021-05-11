@@ -39,7 +39,7 @@ namespace Draughts.Shared.Models
             visited ??= new HashSet<BoardSquare>();
             var square = pos.Shift(dir);
 
-            if (visited.Contains(square))
+            if (!square.IsValid || visited.Contains(square))
             {
                 return Array.Empty<Move[]>();
             }
@@ -54,8 +54,8 @@ namespace Draughts.Shared.Models
             if (piece.Side != side)
             {
                 var jump = square.Shift(dir);
-                    
-                if (GetPiece(jump) is null)
+
+                if (jump.IsValid && GetPiece(jump) is null)
                 {
                     var move = new Move(pos, jump, piece);
 

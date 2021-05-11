@@ -93,6 +93,7 @@ else
     private async Task PieceMoved(Move move)
     {
         Console.WriteLine("Piece moved!");
+        
         _board = await _http.GetFromJsonAsync<Board>(Uri($"/api/boards/{Guid}"));
         _selected = null;
         StateHasChanged();
