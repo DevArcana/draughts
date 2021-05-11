@@ -52,7 +52,8 @@ else
                                 <div @onclick="async () => { if (destination) { if (canMove) { await MoveTo(square); } } else if (canGoBack) { UndoMove(); } else if (highlight) { if (canMove) { ChooseMove(square); } } else { Select(piece); }}" class="board-cell @(destination ? "destination-square" : canGoBack ? "return-square" : highlight ? "highlight-square" : "")">
                                     @if (piece is not null)
                                     {
-                                        <div class="draught @(piece.Side == Side.White ? "white" : "") @(_selected == piece ? "selected" : "")">
+                                        canMove = _board.AvailableMoves.Any(m => m.From == piece.Pos);
+                                        <div class="draught @(piece.Side == Side.White ? "white" : "") @(_selected == piece ? "selected" : canMove ? "available" : "")">
                                             @if (piece.Promoted)
                                             {
                                                 <span class="icon center-icon"><i class="fas fa-crown"></i></span>

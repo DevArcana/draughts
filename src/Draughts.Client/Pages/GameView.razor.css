@@ -67,3 +67,7 @@
 .draught.selected {
     border: yellow 4px solid;
 }
+
+.draught.available {
+    border: cornflowerblue 4px solid;
+}
