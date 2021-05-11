@@ -43,10 +43,13 @@ else
                             {
                                 var square = new BoardSquare(x, y);
                                 var piece = _board.Pieces[x + y * Board.Size];
-
-                                var highlight = _selected is not null && _board.AvailableMoves.Any(x => x.From == _selected.Pos && x.Moves.Any(m => m.To == square));
                                 
-                                <div @onclick="() => { if (highlight) { MoveTo(square); } else { Select(piece); }}" class="board-cell @(highlight ? "highlight-square" : "")">
+                                var highlight = _selected is not null && _candidates.Any(m => m.Moves.Any(move => move.To == square));
+                                var destination = highlight && _candidates.Any(m => m.To == square);
+                                var canMove = highlight && _candidates.Any(m => m.Moves.Length > _moves.Count && m.Moves[_moves.Count].To == square);
+                                var canGoBack = _moves.Any() && _moves.Last().From == square;
+                                    
+                                <div @onclick="async () => { if (destination) { if (canMove) { await MoveTo(square); } } else if (highlight) { if (canMove) { ChooseMove(square); } } else { Select(piece); }}" class="board-cell @(destination ? "destination-square" : highlight ? "highlight-square" : canGoBack ? "return-square" : "")">
                                     @if (piece is not null)
                                     {
                                         <div class="draught @(piece.Side == Side.White ? "white" : "") @(_selected == piece ? "selected" : "")">
@@ -57,7 +60,7 @@ else
                                         </div>
                                     }
                                 </div>
-                            }
+                            } 
                         </div>
                     }
                 }
@@ -72,6 +75,9 @@ else
     
     private Game _game;
     private Board _board;
+    private readonly List<AvailableMove> _candidates = new();
+    private readonly List<AvailableMove> _excluded = new();
+    private readonly List<Move> _moves = new();
 
     private BoardPiece _selected = null;
     
@@ -82,7 +88,7 @@ else
     private async Task MoveTo(BoardSquare square)
     {
         // TODO: This is probably too naive, might be a source of bugs, might want to do a gradual domain pruning
-        var move = _board.AvailableMoves
+        var move = _candidates
             .Where(m => m.From == _selected.Pos)
             .FirstOrDefault(m => m.To == square);
         
@@ -90,30 +96,125 @@ else
         Console.WriteLine(result);
     }
 
+    private void UndoMove()
+    {
+        var lastMove = _moves.Last();
+        var lastMoveIndex = _moves.Count - 1;
+
+        var exclusions = _excluded
+            .Where(m => lastMoveIndex == 0 || (m.From == _moves.First().From && m.Moves.Length >= lastMoveIndex))
+            .ToList();
+            
+        _candidates.AddRange(exclusions);
+
+        foreach (var exclusion in exclusions)
+        {
+            _excluded.Remove(exclusion);
+        }
+            
+        _moves.RemoveAt(lastMoveIndex);
+        _board.UndoMove(lastMove);
+
+        StateHasChanged();
+    }
+    
+    private void ChooseMove(BoardSquare square)
+    {
+        if (_moves.Any() && _moves.Last().From == square)
+        {
+            UndoMove();
+            return;
+        }
+
+        var from = _selected.Pos;
+        var to = square;
+
+        var moveIndex = _moves.Count;
+
+        var move = _candidates
+            .Where(m => m.Moves.Length > moveIndex)
+            .Select(m => m.Moves[moveIndex])
+            .FirstOrDefault(m => m.From == from && m.To == to);
+
+        if (move is not null)
+        {
+            _board.Move(move);
+            _moves.Add(move);
+            
+            var exclusions = _candidates
+                .Where(m => m.Moves.Length <= moveIndex || m.Moves[moveIndex].From != from || m.Moves[moveIndex].To != to)
+                .ToList();
+            
+            _excluded.AddRange(exclusions);
+
+            foreach (var exclusion in exclusions)
+            {
+                _candidates.Remove(exclusion);
+            }
+        }
+        
+        StateHasChanged();
+    }
+
     private async Task PieceMoved(Move move)
     {
         Console.WriteLine("Piece moved!");
         
         _board = await _http.GetFromJsonAsync<Board>(Uri($"/api/boards/{Guid}"));
+        _candidates.Clear();
+        _excluded.Clear();
+        _moves.Clear();
+        _candidates.AddRange(_board?.AvailableMoves ?? Array.Empty<AvailableMove>());
         _selected = null;
         StateHasChanged();
     }
 
     private void Select(BoardPiece piece)
     {
+        var movesMade = _moves.Count;
+
+        for (var i = 0; i < movesMade; i++)
+        {
+            UndoMove();
+        }
+        
+        _candidates.Clear();
+        _excluded.Clear();
+        _moves.Clear();
+        _candidates.AddRange(_board?.AvailableMoves ?? Array.Empty<AvailableMove>());
+        
         if (piece is not null && _selected != piece)
         {
             _selected = piece;
+            
+            var irrelevant = _candidates.Where(x => x.From != _selected.Pos).ToList();
+
+            foreach (var irrelevantMove in irrelevant)
+            {
+                _candidates.Remove(irrelevantMove);
+            }
+            
+            _excluded.AddRange(irrelevant);
+            
+            StateHasChanged();
             return;
         }
         
         _selected = null;
+        
+        StateHasChanged();
     }
 
     protected override async Task OnInitializedAsync()
     {
         _game = await _http.GetFromJsonAsync<Game>(Uri($"/api/games/{Guid}"));
         _board = await _http.GetFromJsonAsync<Board>(Uri($"/api/boards/{Guid}"));
+        _candidates.Clear();
+        _excluded.Clear();
+        _moves.Clear();
+        _candidates.AddRange(_board?.AvailableMoves ?? Array.Empty<AvailableMove>());
+        
+        Console.WriteLine(_candidates);
         
         _hub = new HubConnectionBuilder()
             .WithUrl(Uri("/signalr/games"))
@@ -129,5 +230,4 @@ else
     {
         await _hub.DisposeAsync();
     }
-
 }

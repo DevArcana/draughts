@@ -135,7 +135,33 @@ namespace Draughts.Shared.Models.Board
             
             return availableMoves.ToArray();
         }
-        
+
+        public void Move(Move move)
+        {
+            var piece = GetPiece(move.From);
+            
+            SetPiece(move.From, null);
+            SetPiece(move.To, piece);
+
+            if (move.Taken is not null)
+            {
+                SetPiece(move.Taken.Pos, null);
+            }
+        }
+
+        public void UndoMove(Move move)
+        {
+            var piece = GetPiece(move.To);
+            
+            SetPiece(move.To, null);
+            SetPiece(move.From, piece);
+
+            if (move.Taken is not null)
+            {
+                SetPiece(move.Taken.Pos, move.Taken);
+            }
+        }
+
         public AvailableMove MakeMove(string identifier)
         {
             var move = AvailableMoves.FirstOrDefault(m => m.Identifier == identifier);

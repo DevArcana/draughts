@@ -30,8 +30,17 @@
 }
 
 .board-cell.highlight-square {
+    background: orange !important;
+}
+
+.board-cell.destination-square {
     background: yellow !important;
 }
+
+.board-cell.return-square {
+    background: cornflowerblue !important;
+}
+
 
 .center-icon {
     margin: auto;
