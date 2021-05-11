@@ -156,7 +156,7 @@ else
         StateHasChanged();
     }
 
-    private async Task PieceMoved(Move move)
+    private async Task PieceMoved(string identifier)
     {
         Console.WriteLine("Piece moved!");
         
@@ -220,7 +220,7 @@ else
             .WithUrl(Uri("/signalr/games"))
             .Build();
     
-        _hub.On<Move>("PieceMoved", PieceMoved);
+        _hub.On<string>("PieceMoved", PieceMoved);
 
         await _hub.StartAsync();
         await _hub.SendAsync("WatchBoard", Guid);

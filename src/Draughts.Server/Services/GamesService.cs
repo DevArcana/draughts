@@ -27,7 +27,7 @@ namespace Draughts.Server.Services
             {
                 throw new ArgumentNullException(nameof(name), "Game's name can't be empty!");
             }
-            
+
             var game = new Game(Guid.NewGuid(), name, makePublic);
             var board = new Board();
             board.Initialize();
@@ -83,7 +83,7 @@ namespace Draughts.Server.Services
 
             if (move is not null)
             {
-                await _hub.Clients.Group(boardId.ToString()).SendAsync("PieceMoved", move);
+                await _hub.Clients.Group(boardId.ToString()).SendAsync("PieceMoved", move.Identifier);
             }
 
             return move;
