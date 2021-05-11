@@ -46,9 +46,9 @@ else
                                 
                                 var highlight = _selected is not null && _candidates.Any(m => m.Moves.Any(move => move.To == square));
                                 var destination = highlight && _candidates.Any(m => m.To == square);
-                                var canMove = highlight && _candidates.Any(m => m.Moves.Length > _moves.Count && m.Moves[_moves.Count].To == square);
                                 var canGoBack = _moves.Any() && _moves.Last().From == square;
-                                    
+                                var canMove = canGoBack || highlight && _candidates.Any(m => m.Moves.Length >= _moves.Count && m.Moves[_moves.Count].To == square);
+
                                 <div @onclick="async () => { if (destination) { if (canMove) { await MoveTo(square); } } else if (highlight) { if (canMove) { ChooseMove(square); } } else { Select(piece); }}" class="board-cell @(destination ? "destination-square" : highlight ? "highlight-square" : canGoBack ? "return-square" : "")">
                                     @if (piece is not null)
                                     {
