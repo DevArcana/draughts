@@ -47,9 +47,9 @@ else
                                 var highlight = _selected is not null && _candidates.Any(m => m.Moves.Any(move => move.To == square));
                                 var destination = highlight && _candidates.Any(m => m.To == square);
                                 var canGoBack = _moves.Any() && _moves.Last().From == square;
-                                var canMove = canGoBack || highlight && _candidates.Any(m => m.Moves.Length >= _moves.Count && m.Moves[_moves.Count].To == square);
+                                var canMove = canGoBack || _candidates.Any(m => m.Moves[_moves.Count].To == square);
 
-                                <div @onclick="async () => { if (destination) { if (canMove) { await MoveTo(square); } } else if (highlight) { if (canMove) { ChooseMove(square); } } else { Select(piece); }}" class="board-cell @(destination ? "destination-square" : highlight ? "highlight-square" : canGoBack ? "return-square" : "")">
+                                <div @onclick="async () => { if (destination) { if (canMove) { await MoveTo(square); } } else if (canGoBack) { UndoMove(); } else if (highlight) { if (canMove) { ChooseMove(square); } } else { Select(piece); }}" class="board-cell @(destination ? "destination-square" : canGoBack ? "return-square" : highlight ? "highlight-square" : "")">
                                     @if (piece is not null)
                                     {
                                         <div class="draught @(piece.Side == Side.White ? "white" : "") @(_selected == piece ? "selected" : "")">
@@ -120,21 +120,13 @@ else
     
     private void ChooseMove(BoardSquare square)
     {
-        if (_moves.Any() && _moves.Last().From == square)
-        {
-            UndoMove();
-            return;
-        }
-
-        var from = _selected.Pos;
         var to = square;
-
         var moveIndex = _moves.Count;
 
         var move = _candidates
             .Where(m => m.Moves.Length > moveIndex)
             .Select(m => m.Moves[moveIndex])
-            .FirstOrDefault(m => m.From == from && m.To == to);
+            .FirstOrDefault(m => m.To == to);
 
         if (move is not null)
         {
@@ -142,7 +134,7 @@ else
             _moves.Add(move);
             
             var exclusions = _candidates
-                .Where(m => m.Moves.Length <= moveIndex || m.Moves[moveIndex].From != from || m.Moves[moveIndex].To != to)
+                .Where(m => m.Moves.Length <= moveIndex || m.Moves[moveIndex].From != move.From || m.Moves[moveIndex].To != to)
                 .ToList();
             
             _excluded.AddRange(exclusions);
