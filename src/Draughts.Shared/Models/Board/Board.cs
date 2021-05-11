@@ -89,17 +89,23 @@ namespace Draughts.Shared.Models
         {
             var moves = new List<Move[]>(4);
 
-            var upperLeft = FindMoves(piece.Side, piece.Pos, Direction.UpperLeft);
-            moves.AddRange(upperLeft);
+            if (piece.Side == Side.White || piece.Promoted)
+            {
+                var upperLeft = FindMoves(piece.Side, piece.Pos, Direction.UpperLeft);
+                moves.AddRange(upperLeft);
             
-            var upperRight = FindMoves(piece.Side, piece.Pos, Direction.UpperRight);
-            moves.AddRange(upperRight);
+                var upperRight = FindMoves(piece.Side, piece.Pos, Direction.UpperRight);
+                moves.AddRange(upperRight);
+            }
+
+            if (piece.Side == Side.Black || piece.Promoted)
+            {
+                var lowerLeft = FindMoves(piece.Side, piece.Pos, Direction.LowerLeft);
+                moves.AddRange(lowerLeft);
             
-            var lowerLeft = FindMoves(piece.Side, piece.Pos, Direction.LowerLeft);
-            moves.AddRange(lowerLeft);
-            
-            var lowerRight = FindMoves(piece.Side, piece.Pos, Direction.LowerRight);
-            moves.AddRange(lowerRight);
+                var lowerRight = FindMoves(piece.Side, piece.Pos, Direction.LowerRight);
+                moves.AddRange(lowerRight);
+            }
 
             if (moves.Any(x => x[0].Taken is not null))
             {
