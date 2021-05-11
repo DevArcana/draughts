@@ -1,7 +1,7 @@
 ﻿@page "/games/{guid}"
 @using Draughts.Shared.Models
+@using Draughts.Shared.Models.Board
 @using Microsoft.AspNetCore.SignalR.Client
-@using Draughts.Server.Models
 @inject NavigationManager _navigationManager;
 @inject HttpClient _http;
 @implements IAsyncDisposable

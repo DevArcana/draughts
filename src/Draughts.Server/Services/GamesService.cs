@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Draughts.Server.Hubs;
 using Draughts.Shared.Models;
+using Draughts.Shared.Models.Board;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Draughts.Server.Services

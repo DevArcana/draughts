@@ -1,4 +1,4 @@
-﻿namespace Draughts.Shared.Models
+﻿namespace Draughts.Shared.Models.Board
 {
     public enum Direction
     {

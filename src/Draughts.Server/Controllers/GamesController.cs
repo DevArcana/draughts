@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Draughts.Server.Models;
 using Draughts.Server.Services;
+using Draughts.Shared.Models.Dto;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Draughts.Server.Controllers

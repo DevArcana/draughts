@@ -1,4 +1,4 @@
-﻿namespace Draughts.Shared.Models
+﻿namespace Draughts.Shared.Models.Board
 {
     public record BoardPiece(Side Side, BoardSquare Pos, bool Promoted = false)
     {

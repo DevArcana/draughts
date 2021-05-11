@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Draughts.Shared.Models
+namespace Draughts.Shared.Models.Board
 {
     public class Board
     {

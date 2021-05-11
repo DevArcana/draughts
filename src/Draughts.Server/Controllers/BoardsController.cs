@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Draughts.Server.Services;
 using Draughts.Shared.Models;
+using Draughts.Shared.Models.Board;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Draughts.Server.Controllers
