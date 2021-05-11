@@ -1,15 +1,13 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Draughts.Server.Services;
-using Draughts.Shared.Models;
-using Draughts.Shared.Models.Board;
 using Draughts.Shared.Models.Dto;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Draughts.Server.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/[controller]/{guid:guid}")]
     public class BoardsController : ControllerBase
     {
         private readonly GamesService _games;
@@ -19,7 +17,7 @@ namespace Draughts.Server.Controllers
             _games = games;
         }
 
-        [HttpGet("{guid:guid}")]
+        [HttpGet]
         public IActionResult GetBoard(Guid guid)
         {
             var board = _games.GetBoard(guid);
@@ -32,7 +30,7 @@ namespace Draughts.Server.Controllers
             return Ok(board);
         }
 
-        [HttpPost("{guid:guid}/moves")]
+        [HttpPost("moves")]
         public async Task<IActionResult> MakeMove(Guid guid, [FromBody] MakeMoveDto dto)
         {
             var move = await _games.MakeMove(guid, dto.Identifier);
