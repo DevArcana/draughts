@@ -33,215 +33,53 @@ namespace Draughts.Shared.Models
         {
             Pieces[PosIndex(x, y)] = piece;
         }
-        
-        private IEnumerable<Move[]> FindMoves(Side side, BoardSquare pos, Direction dir, HashSet<BoardSquare> visited = null)
+
+        private IEnumerable<Move[]> FindMoves(Side side, BoardSquare pos, Direction dir, HashSet<BoardSquare> visited = null, bool capture = false)
         {
             visited ??= new HashSet<BoardSquare>();
+            var square = pos.Shift(dir);
 
-            switch (dir)
+            if (visited.Contains(square))
             {
-                case Direction.UpperLeft:
-                {
-                    var x = pos.X - 1;
-                    var y = pos.Y - 1;
+                return Array.Empty<Move[]>();
+            }
+            
+            var piece = GetPiece(square);
 
-                    var square = new BoardSquare(x, y);
+            if (piece is null)
+            {
+                return capture ? Array.Empty<Move[]>() : new[] {new []{ new Move(pos, square, null)}};
+            }
 
-                    if (visited.Contains(square))
-                    {
-                        return Array.Empty<Move[]>();
-                    }
-                
-                    var piece = GetPiece(square);
-
-                    if (piece is null)
-                    {
-                        return new[] {new []{ new Move(pos, new BoardSquare(x, y), null)}};
-                    }
-
-                    if (piece.Side != side)
-                    {
-                        x = pos.X - 2;
-                        y = pos.Y - 2;
+            if (piece.Side != side)
+            {
+                var jump = square.Shift(dir);
                     
-                        if (GetPiece(x, y) is null)
-                        {
-                            var move = new Move(pos, new BoardSquare(x, y), piece);
-
-                            visited.Add(square);
-                            var paths = new List<Move[]>();
-                            paths.AddRange(FindMoves(side, move.To, Direction.UpperLeft, visited));
-                            paths.AddRange(FindMoves(side, move.To, Direction.UpperRight, visited));
-                            paths.AddRange(FindMoves(side, move.To, Direction.LowerLeft, visited));
-                            paths.AddRange(FindMoves(side, move.To, Direction.LowerRight, visited));
-                            visited.Remove(square);
-
-                            var maxLength = paths.Max(x => x.Length);
-
-                            return paths.Where(x => x.Length == maxLength).Select(path =>
-                            {
-                                var moves = new List<Move>();
-                                moves.Add(move);
-                                moves.AddRange(path);
-                                return moves.ToArray();
-                            });
-                        }
-                    }
-
-                    break;
-                }
-                case Direction.UpperRight:
+                if (GetPiece(jump) is null)
                 {
-                    var x = pos.X + 1;
-                    var y = pos.Y - 1;
+                    var move = new Move(pos, jump, piece);
 
-                    var square = new BoardSquare(x, y);
+                    visited.Add(square);
+                    var paths = new List<Move[]>();
+                    paths.AddRange(FindMoves(side, jump, Direction.UpperLeft, visited, true));
+                    paths.AddRange(FindMoves(side, jump, Direction.UpperRight, visited, true));
+                    paths.AddRange(FindMoves(side, jump, Direction.LowerLeft, visited, true));
+                    paths.AddRange(FindMoves(side, jump, Direction.LowerRight, visited, true));
+                    visited.Remove(square);
 
-                    if (visited.Contains(square))
+                    if (!paths.Any())
                     {
-                        return Array.Empty<Move[]>();
+                        return new[] {new[] {move}};
                     }
-                
-                    var piece = GetPiece(square);
-
-                    if (piece is null)
-                    {
-                        return new[] {new []{ new Move(pos, new BoardSquare(x, y), null)}};
-                    }
-                
-                    if (piece.Side != side)
-                    {
-                        x = pos.X + 2;
-                        y = pos.Y - 2;
                     
-                        if (GetPiece(x, y) is null)
-                        {
-                            var move = new Move(pos, new BoardSquare(x, y), piece);
-
-                            visited.Add(square);
-                            var paths = new List<Move[]>();
-                            paths.AddRange(FindMoves(side, move.To, Direction.UpperLeft, visited));
-                            paths.AddRange(FindMoves(side, move.To, Direction.UpperRight, visited));
-                            paths.AddRange(FindMoves(side, move.To, Direction.LowerLeft, visited));
-                            paths.AddRange(FindMoves(side, move.To, Direction.LowerRight, visited));
-                            visited.Remove(square);
-
-                            var maxLength = paths.Max(x => x.Length);
-
-                            return paths.Where(x => x.Length == maxLength).Select(path =>
-                            {
-                                var moves = new List<Move>();
-                                moves.Add(move);
-                                moves.AddRange(path);
-                                return moves.ToArray();
-                            });
-                        }
-                    }
-
-                    break;
+                    var maxLength = paths.Max(x => x.Length);
+                    return paths.Where(x => x.Length == maxLength).Select(path =>
+                    {
+                        var moves = new List<Move> {move};
+                        moves.AddRange(path);
+                        return moves.ToArray();
+                    });
                 }
-                case Direction.LowerLeft:
-                {
-                    var x = pos.X - 1;
-                    var y = pos.Y + 1;
-
-                    var square = new BoardSquare(x, y);
-
-                    if (visited.Contains(square))
-                    {
-                        return Array.Empty<Move[]>();
-                    }
-                
-                    var piece = GetPiece(square);
-
-                    if (piece is null)
-                    {
-                        return new[] {new []{ new Move(pos, new BoardSquare(x, y), null)}};
-                    }
-                
-                    if (piece.Side != side)
-                    {
-                        x = pos.X - 2;
-                        y = pos.Y + 2;
-                    
-                        if (GetPiece(x, y) is null)
-                        {
-                            var move = new Move(pos, new BoardSquare(x, y), piece);
-
-                            visited.Add(square);
-                            var paths = new List<Move[]>();
-                            paths.AddRange(FindMoves(side, move.To, Direction.UpperLeft, visited));
-                            paths.AddRange(FindMoves(side, move.To, Direction.UpperRight, visited));
-                            paths.AddRange(FindMoves(side, move.To, Direction.LowerLeft, visited));
-                            paths.AddRange(FindMoves(side, move.To, Direction.LowerRight, visited));
-                            visited.Remove(square);
-
-                            var maxLength = paths.Max(x => x.Length);
-
-                            return paths.Where(x => x.Length == maxLength).Select(path =>
-                            {
-                                var moves = new List<Move>();
-                                moves.Add(move);
-                                moves.AddRange(path);
-                                return moves.ToArray();
-                            });
-                        }
-                    }
-
-                    break;
-                }
-                case Direction.LowerRight:
-                {
-                    var x = pos.X + 1;
-                    var y = pos.Y + 1;
-
-                    var square = new BoardSquare(x, y);
-
-                    if (visited.Contains(square))
-                    {
-                        return Array.Empty<Move[]>();
-                    }
-                
-                    var piece = GetPiece(square);
-
-                    if (piece is null)
-                    {
-                        return new[] {new []{ new Move(pos, new BoardSquare(x, y), null)}};
-                    }
-                
-                    if (piece.Side != side)
-                    {
-                        x = pos.X + 2;
-                        y = pos.Y + 2;
-                    
-                        if (GetPiece(x, y) is null)
-                        {
-                            var move = new Move(pos, new BoardSquare(x, y), piece);
-
-                            visited.Add(square);
-                            var paths = new List<Move[]>();
-                            paths.AddRange(FindMoves(side, move.To, Direction.UpperLeft, visited));
-                            paths.AddRange(FindMoves(side, move.To, Direction.UpperRight, visited));
-                            paths.AddRange(FindMoves(side, move.To, Direction.LowerLeft, visited));
-                            paths.AddRange(FindMoves(side, move.To, Direction.LowerRight, visited));
-                            visited.Remove(square);
-
-                            var maxLength = paths.Max(x => x.Length);
-
-                            return paths.Where(x => x.Length == maxLength).Select(path =>
-                            {
-                                var moves = new List<Move>();
-                                moves.Add(move);
-                                moves.AddRange(path);
-                                return moves.ToArray();
-                            });
-                        }
-                    }
-
-                    break;
-                }
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(dir), dir, null);
             }
 
             return Array.Empty<Move[]>();

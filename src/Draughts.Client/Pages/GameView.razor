@@ -45,8 +45,8 @@ else
                                 var piece = _board.Pieces[x + y * Board.Size];
 
                                 var highlight = _selected is not null && _board.AvailableMoves.Any(x => x.From == _selected.Pos && x.Moves.Any(m => m.To == square));
-
-                                <div @onclick="() => { Select(piece); }" class="board-cell @(highlight ? "highlight-square" : "")">
+                                
+                                <div @onclick="() => { if (highlight) { MoveTo(square); } else { Select(piece); }}" class="board-cell @(highlight ? "highlight-square" : "")">
                                     @if (piece is not null)
                                     {
                                         <div class="draught @(piece.Side == Side.White ? "white" : "") @(_selected == piece ? "selected" : "")">
@@ -79,8 +79,13 @@ else
     
     private Uri Uri(string uri) => _navigationManager.ToAbsoluteUri(uri);
 
-    private async Task MoveTo(AvailableMove move)
+    private async Task MoveTo(BoardSquare square)
     {
+        // TODO: This is probably too naive, might be a source of bugs, might want to do a gradual domain pruning
+        var move = _board.AvailableMoves
+            .Where(m => m.From == _selected.Pos)
+            .FirstOrDefault(m => m.To == square);
+        
         var result = await _http.PostAsJsonAsync(Uri($"/api/boards/{Guid}/moves"), move);
         Console.WriteLine(result);
     }
