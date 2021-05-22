@@ -79,11 +79,20 @@ namespace Draughts.Server.Services
                 return null;
             }
 
+            var white = board.CurrentTurn == Side.White;
             var move = board.MakeMove(identifier);
 
             if (move is not null)
             {
                 await _hub.Clients.Group(boardId.ToString()).SendAsync("PieceMoved", move.Identifier);
+                if (white)
+                {
+                    await _hub.Clients.Group($"{boardId} white").SendAsync("PieceMoved", move.Identifier);
+                }
+                else
+                {
+                    await _hub.Clients.Group($"{boardId} black").SendAsync("PieceMoved", move.Identifier);
+                }
             }
 
             return move;
